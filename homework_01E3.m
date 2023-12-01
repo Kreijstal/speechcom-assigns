@@ -15,11 +15,6 @@ e=[];
 p=[];
 
 
-% We need to create a better findPeak function, this one detects peaks that are in the negative area, our purpose is to find the peak index
-% that is in the positive area, for this we should try the following:
-% zc is an array with zero crossing 0 for no zero crossing 1 for zero crossing, for each range of zero crossings, 
-% find the max value in that range if it is positive, proceed to find first peak 
-% if it is negative, find the next zero crossing and repeat the process
 function peakIndex = findPeak(r, zc)
     % Ensure non-empty input
     if isempty(r) || isempty(zc)
@@ -56,8 +51,7 @@ for i = 1:size(xWin, 2)
     %zcra = zeroCrossing(xWinI);
     zcra = zeroCrossing(transpose(r_xx_norm));
 
-    %we then calculate the fundamental frequency (the function is defined
-    %at the end of this script)
+    %we then calculate the fundamental frequency 
     peak = findPeak(r_xx,zcra);
     %f_0_norm = findPeak(r_xx_norm,zcra_norm);
 
@@ -70,16 +64,16 @@ for i = 1:size(xWin, 2)
     p_0 = r_xx_norm(peak);
 
     %set a theshhold matrix for all features
-    thresh = [0.05, 0.01, 0.05];
+    thresh = [0.5, 0.001, 0.5];
 
     isVoiced = [E > thresh(1), zc > thresh(2), p_0 > thresh(3)];
     %if it's voiced then we add f_0 to f0 vector otherwise nan
     
-    %if isVoiced
-        f0 = [f0, 1/p_0];
-    %else
-    %    f0 = [f0, nan];
-    %end
+    if isVoiced
+        f0 = [f0, 1/(peak/fs)];
+    else
+        f0 = [f0, nan];
+    end
     %we add the zero crossing rate to the zcr vector
     zcr = [zcr, zc];
     %we add the energy to the energy vector
@@ -111,6 +105,7 @@ title('Features')
 legend('Periodicity', 'Energy', 'Zero Crossing Rate')
 ax(3) = subplot(3,1,3);
 plot(tWin, f0, 'k')
+ylim([150 300]); % Set y-axis limits to 150-300 Hz
 grid on; box on;
 ylabel('Frequency [Hz]')
 xlabel('Time [s]')
