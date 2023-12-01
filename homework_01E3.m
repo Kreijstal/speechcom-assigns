@@ -14,6 +14,52 @@ zcr=[];
 e=[];
 p=[];
 
+
+% We need to create a better findPeak function, this one detects peaks that are in the negative area, our purpose is to find the peak index
+% that is in the positive area, for this we should try the following:
+% zc is an array with zero crossing 0 for no zero crossing 1 for zero crossing, for each range of zero crossings, 
+% find the max value in that range if it is positive, proceed to find first peak 
+% if it is negative, find the next zero crossing and repeat the process
+function peakIndex = findPeak(r, zc)
+    % Find the indices of all zero crossings
+    zcIndices = find(zc);
+
+    % Initialize peakIndex to an empty array
+    peakIndex = [];
+
+    % Iterate through each zero crossing
+    for idx = 1:length(zcIndices)
+        % Start searching from the current zero crossing index
+        startIdx = zcIndices(idx);
+
+        % Check if there's a next zero crossing; if not, end at the length of r
+        if idx < length(zcIndices)
+            endIdx = zcIndices(idx + 1) - 1;
+        else
+            endIdx = length(r);
+        end
+
+        % Find the maximum value in the current range
+        [maxVal, maxIdx] = max(r(startIdx:endIdx));
+
+        % Check if the maximum value is positive and if the peak is not at the edges
+        if maxVal > 0 && (startIdx + maxIdx - 1 > 1) && (startIdx + maxIdx - 1 < length(r))
+            % Check if the identified max is a peak
+            if r(startIdx + maxIdx - 1) > r(startIdx + maxIdx - 2) && r(startIdx + maxIdx - 1) > r(startIdx + maxIdx)
+                peakIndex = startIdx + maxIdx - 1;
+                break;
+            end
+        end
+    end
+
+    % Return empty if no peak is found
+    if isempty(peakIndex)
+        peakIndex = NaN;
+    end
+end
+
+
+
 %loop all columns of xWin
 for i = 1:size(xWin, 2)
     xWinI=xWin(:,i);
@@ -25,13 +71,13 @@ for i = 1:size(xWin, 2)
     %find the energy of the signal
     E= sum(xWinI.^2);
     %we calculate the zero crossing rate, we use zeroCrossing.m
-    zcra = zeroCrossing(xWinI);
-    zcra_norm = zeroCrossing(transpose(r_xx_norm));
+    %zcra = zeroCrossing(xWinI);
+    zcra = zeroCrossing(transpose(r_xx_norm));
 
     %we then calculate the fundamental frequency (the function is defined
     %at the end of this script)
-    f_0 = findF0(r_xx,zcra,nWin);
-    f_0_norm = findF0(r_xx_norm,zcra_norm,nWin);
+    peak = findPeak(r_xx,zcra);
+    %f_0_norm = findPeak(r_xx_norm,zcra_norm);
 
     %f_00 = findF0(r_xx,zcra,fs);
 
@@ -39,16 +85,16 @@ for i = 1:size(xWin, 2)
     zc = mean(zcra);
 
     %we calculate it's periodicity of the signal window
-    p_0 = 1/f_0_norm;
+    p_0 = r_xx_norm(peak);
 
     %set a theshhold matrix for all features
-    thresh = [0.05, 0.05, 0.05];
+    thresh = [0.1, 0.1, 0.1];
 
     isVoiced = [E > thresh(1), zc > thresh(2), p_0 > thresh(3)];
     %if it's voiced then we add f_0 to f0 vector otherwise nan
     
     if isVoiced
-        f0 = [f0, f_0];
+        f0 = [f0, peak/fs];
     else
         f0 = [f0, nan];
     end
@@ -90,16 +136,3 @@ title('Pitch-Contour')
 linkaxes(ax, 'x')
 
 
-function f0=findF0(r,zc,fs)
-    % find first zero crossing
-    zc = find(zc,1);
-    % from this index find the first peak
-    for i = zc:length(r)
-        if r(i) > r(i-1) && r(i) > r(i+1)
-            peak = i;
-            break;
-        end
-    end
-    % calculate the fundamental frequency
-    f0 = fs / peak;
-end
