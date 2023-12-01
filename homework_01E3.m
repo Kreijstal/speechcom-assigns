@@ -21,42 +21,24 @@ p=[];
 % find the max value in that range if it is positive, proceed to find first peak 
 % if it is negative, find the next zero crossing and repeat the process
 function peakIndex = findPeak(r, zc)
-    % Find the indices of all zero crossings
-    zcIndices = find(zc);
-
-    % Initialize peakIndex to an empty array
-    peakIndex = [];
-
-    % Iterate through each zero crossing
-    for idx = 1:length(zcIndices)
-        % Start searching from the current zero crossing index
-        startIdx = zcIndices(idx);
-
-        % Check if there's a next zero crossing; if not, end at the length of r
-        if idx < length(zcIndices)
-            endIdx = zcIndices(idx + 1) - 1;
-        else
-            endIdx = length(r);
-        end
-
-        % Find the maximum value in the current range
-        [maxVal, maxIdx] = max(r(startIdx:endIdx));
-
-        % Check if the maximum value is positive and if the peak is not at the edges
-        if maxVal > 0 && (startIdx + maxIdx - 1 > 1) && (startIdx + maxIdx - 1 < length(r))
-            % Check if the identified max is a peak
-            if r(startIdx + maxIdx - 1) > r(startIdx + maxIdx - 2) && r(startIdx + maxIdx - 1) > r(startIdx + maxIdx)
-                peakIndex = startIdx + maxIdx - 1;
-                break;
-            end
-        end
+    % Ensure non-empty input
+    if isempty(r) || isempty(zc)
+        peakIndex = NaN; % or some error handling
+        return;
     end
 
-    % Return empty if no peak is found
-    if isempty(peakIndex)
-        peakIndex = NaN;
+    % Find first zero crossing
+    firstZCIndex = find(zc, 1);
+    if isempty(firstZCIndex)
+        peakIndex = NaN; % or some error handling
+        return;
     end
+
+    % Find the maximum value and its index after the first zero crossing
+    [maxPeakValue, relativeIndex] = max(r(firstZCIndex:end));
+    peakIndex = firstZCIndex + relativeIndex - 1;
 end
+
 
 
 
@@ -88,16 +70,16 @@ for i = 1:size(xWin, 2)
     p_0 = r_xx_norm(peak);
 
     %set a theshhold matrix for all features
-    thresh = [0.1, 0.1, 0.1];
+    thresh = [0.05, 0.01, 0.05];
 
     isVoiced = [E > thresh(1), zc > thresh(2), p_0 > thresh(3)];
     %if it's voiced then we add f_0 to f0 vector otherwise nan
     
-    if isVoiced
-        f0 = [f0, peak/fs];
-    else
-        f0 = [f0, nan];
-    end
+    %if isVoiced
+        f0 = [f0, 1/p_0];
+    %else
+    %    f0 = [f0, nan];
+    %end
     %we add the zero crossing rate to the zcr vector
     zcr = [zcr, zc];
     %we add the energy to the energy vector
