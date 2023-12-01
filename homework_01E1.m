@@ -1,7 +1,8 @@
+clear; clc; close all
+
 % Load the audio file
 [speech, fs] = audioread('PA1/speech1.wav');
 addpath('./PA1/');
-
 
 % Convert maxTimeLag from milliseconds to samples
 maxTimeLag_ms = 50; % 50 milliseconds
@@ -21,7 +22,7 @@ ylabel('Autocorrelation (r_{xx})');
 title('Autocorrelation Function of the Speech Signal');
 
 % Clone r_xx
-r_xx_clone = r_xx;
+r_xx_clone = transpose(r_xx);
 
 % Find zero crossings
 zero_crossings = zeroCrossing(r_xx_clone);

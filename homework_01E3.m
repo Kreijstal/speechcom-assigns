@@ -1,3 +1,5 @@
+clear; clc; close all
+
 [speech, fs] = audioread('PA1/speech1.wav');
 addpath('./PA1/');
 
@@ -7,10 +9,11 @@ nWin = 0.05 * fs;
 [xWin, tWin] = makeWin(speech, fs, nWin, 8/10);
 
 % for every window
-f0=[]
-zcr=[]
-e=[]
-p=[]
+f0=[];
+zcr=[];
+e=[];
+p=[];
+
 %loop all columns of xWin
 for i = 1:size(xWin, 2)
     xWinI=xWin(:,i);
@@ -23,20 +26,25 @@ for i = 1:size(xWin, 2)
     E= sum(xWinI.^2);
     %we calculate the zero crossing rate, we use zeroCrossing.m
     zcra = zeroCrossing(xWinI);
+    zcra_norm = zeroCrossing(transpose(r_xx_norm));
 
-    %we then calculate the fundamental frequency
-    f_0 = findF0(r_xx_norm,zcra,fs);
+    %we then calculate the fundamental frequency (the function is defined
+    %at the end of this script)
+    f_0 = findF0(r_xx,zcra,nWin);
+    f_0_norm = findF0(r_xx_norm,zcra_norm,nWin);
+
+    %f_00 = findF0(r_xx,zcra,fs);
 
     %we add the zeros
-    zc = sum(zcra);
+    zc = mean(zcra);
 
     %we calculate it's periodicity of the signal window
-    p_0 = 1/f_0;
+    p_0 = 1/f_0_norm;
 
     %set a theshhold matrix for all features
-    thresh = [0.1,0.1,0.1];
+    thresh = [0.05, 0.05, 0.05];
 
-    isVoiced = [E > thresh(1), zc > thresh(2), p > thresh(3)];
+    isVoiced = [E > thresh(1), zc > thresh(2), p_0 > thresh(3)];
     %if it's voiced then we add f_0 to f0 vector otherwise nan
     
     if isVoiced
@@ -61,15 +69,24 @@ clf
 ax(1) = subplot(3,1,1);
 plot(t, x)
 grid on; box on;
+ylabel('Amplitude')
+xlabel('Time [s]')
+title('Speech')
 ax(2) = subplot(3,1,2);
 hold on
 plot(tWin, p)
 plot(tWin, e)
 plot(tWin, zcr)
 grid on; box on;
+xlabel('Time [s]')
+title('Features')
+legend('Periodicity', 'Energy', 'Zero Crossing Rate')
 ax(3) = subplot(3,1,3);
 plot(tWin, f0, 'k')
 grid on; box on;
+ylabel('Frequency [Hz]')
+xlabel('Time [s]')
+title('Pitch-Contour')
 linkaxes(ax, 'x')
 
 
