@@ -27,24 +27,42 @@ title(['Spectrogram of "',audiofile '"'])
 %% Fill in your solution here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % E1 Computation of equally spaced points on the mel-scale
+fmin = min(freqs);
+fmax = max(freqs);
 
+k = 24;
 % ... call the function melfreqs
-
+edges = melfreqs(fmin, fmax, k);
 
 % E2 Computation of the mids of the triangular filters
 
 % ... call the function computeMids
-
+mids = computeMids(freqs, edges);
 
 % E3 Computation of the mel-filter bank
 
 % ... call the function computeFilter
+H = computeFilter(mids, freqs);
 
+% Remove dummy rows (first and last)
+H = H(2:end-1, :);
+
+% Plot all k triangular filters over the frequency into one figure
+figure
+for t = 1:size(H, 1)
+    plot(freqs, H(t, :));
+    hold on;
+end
+hold off;
+
+xlabel('Frequency [Hz]');
+ylabel('Amplitude');
+title(['mel-filter bank for "',audiofile '"']);
 
 % E4 Computation of the mel-filtered spectrum
 
 % ... call the function melFilter
-
+melSpec = melFilter(spec, H);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -119,3 +137,4 @@ fprintf('Speaker 3 detected as: Speaker %i\n\n', mode(cIdx3))
 % you may listen to the speech files to check if you can distinguish the
 % different speakers
 % sound(x1, fs)
+
