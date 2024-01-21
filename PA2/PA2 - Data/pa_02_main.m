@@ -7,7 +7,7 @@
 
 %% Prepare
 clear; clc; close all;
-
+addpath('../');
 %% Read wave file
 audiofile = '13ZZ637A.wav';
 [x, fs] = audioread(audiofile);
